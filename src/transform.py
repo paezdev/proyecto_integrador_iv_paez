@@ -207,36 +207,23 @@ def query_orders_per_day_and_holidays_2017(database: Engine) -> QueryResult:
     # Reading the orders from olist_orders table
     orders = read_sql("SELECT * FROM olist_orders", database)
 
-    # TODO: Convertir la columna order_purchase_timestamp a tipo datetime.
-    # Reemplaza el contenido de la columna `order_purchase_timestamp` en el DataFrame `orders`
-    # con los mismos datos pero convertidos a tipo datetime.
-    # Te sugerimos leer sobre cómo usar pd.to_datetime() para esto.
-    orders["order_purchase_timestamp"] = ...
+    # Convertir la columna order_purchase_timestamp a datetime
+    orders["order_purchase_timestamp"] = pd.to_datetime(orders["order_purchase_timestamp"])
 
-    # TODO: Filtrar solo las fechas de compra de pedidos del año 2017.
-    # Usando el DataFrame `orders`, aplica una máscara booleana para obtener todas las
-    # columnas, pero solo las filas correspondientes al año 2017.
-    # Asigna el resultado a una nueva variable llamada `filtered_dates`.
-    filtered_dates = ...
+    # Filtrar solo las fechas de 2017
+    filtered_dates = orders[orders["order_purchase_timestamp"].dt.year == 2017]
 
-    # TODO: Contar la cantidad de pedidos por día.
-    # Usando el DataFrame `filtered_dates`, cuenta cuántos pedidos se hicieron
-    # cada día.
-    # Asigna el resultado a la variable `order_purchase_ammount_per_date`.
-    order_purchase_ammount_per_date = ...
+    # Contar la cantidad de pedidos por día
+    order_purchase_ammount_per_date = (
+        filtered_dates.groupby(filtered_dates["order_purchase_timestamp"].dt.date)
+        .size()
+        .reset_index(name="order_count")
+    )
 
-    # TODO: Crear un DataFrame con el resultado. Asígnalo a la variable `result_df`.
-    # Ahora crearemos el DataFrame final para la salida.
-    # Este DataFrame debe tener 3 columnas:
-    #   - 'order_count': con la cantidad de pedidos por día. Debes obtener
-    #                    estos datos de la variable `order_purchase_ammount_per_date`.
-    #   - 'date': la fecha correspondiente a cada cantidad de pedidos.
-    #   - 'holiday': columna booleana con True si esa fecha es festivo,
-    #                y False en caso contrario. Usa el DataFrame `holidays` para esto.
-    result_df = ...
+    # Crear el DataFrame con la columna holiday
+    result_df = order_purchase_ammount_per_date.copy()
+    result_df["holiday"] = result_df["order_purchase_timestamp"].isin(holidays["date"])
 
-    # Mantén el código a continuación tal como está, esto devolverá el resultado de
-    # la variable `aggregations` con el nombre y formato correspondiente.
     return QueryResult(query=query_name, result=result_df)
 
 
