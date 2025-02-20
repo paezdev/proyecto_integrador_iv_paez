@@ -26,7 +26,7 @@ def get_public_holidays(public_holidays_url: str, year: str) -> DataFrame:
     response = requests.get(f"{public_holidays_url}/{year}/BR")
     try:
         response.raise_for_status()
-        #df = read_json(response.text)
+        #df = read_json(response.text) será eliminado en futuras versiones 
         df = read_json(StringIO(response.text))
         df["date"] = to_datetime(df["date"])
         df = df.drop(columns=["types", "counties"])
