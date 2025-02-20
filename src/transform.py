@@ -169,29 +169,17 @@ def query_freight_value_weight_relationship(database: Engine) -> QueryResult:
     # Get products from olist_products table
     products = read_sql("SELECT * FROM olist_products", database)
 
-    # TODO: Fusionar las tablas items, orders y products usando 'order_id'/'product_id'.
-    # Sugerimos usar la función pandas.merge().
-    # Asigna el resultado a la variable `data`.
-    data = ...
+    # Fusionar las tablas usando merge()
+    data = items.merge(orders, on="order_id").merge(products, on="product_id")
 
-    # TODO: Obtener solo los pedidos entregados.
-    # Usando los resultados anteriores de la fusión (almacenados en la variable `data`),
-    # aplica una máscara booleana para conservar solo los pedidos con estado 'delivered'.
-    # Asigna el resultado a la variable `delivered`.
-    delivered = ...
+    # Filtrar solo los pedidos entregados
+    delivered = data[data["order_status"] == "delivered"]
 
-    # TODO: Obtener la suma de freight_value y product_weight_g por cada order_id.
-    # Un mismo pedido (identificado por 'order_id') puede contener varios productos,
-    # por lo que decidimos sumar los valores de 'freight_value' y 'product_weight_g'
-    # de todos los productos dentro de ese pedido.
-    # Usa el DataFrame de pandas almacenado en la variable `delivered`. Sugerimos
-    # que consultes pandas.DataFrame.groupby() y pandas.DataFrame.agg() para la
-    # transformación de los datos.
-    # Guarda el resultado en la variable `aggregations`.
-    aggregations = ...
+    # Agrupar por order_id y sumar freight_value y product_weight_g
+    aggregations = delivered.groupby("order_id").agg(
+        {"freight_value": "sum", "product_weight_g": "sum"}
+    ).reset_index()
 
-    # Mantén el código a continuación tal como está, esto devolverá el resultado de
-    # la variable `aggregations` con el nombre y formato correspondiente.
     return QueryResult(query=query_name, result=aggregations)
 
 
