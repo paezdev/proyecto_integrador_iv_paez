@@ -1,4 +1,5 @@
 from typing import Dict
+from io import StringIO
 
 import requests
 from pandas import DataFrame, read_csv, read_json, to_datetime
@@ -13,6 +14,8 @@ def temp() -> DataFrame:
 
 
 def get_public_holidays(public_holidays_url: str, year: str) -> DataFrame:
+
+
     """Get the public holidays for the given year for Brazil.
     Args:
         public_holidays_url (str): url to the public holidays.
@@ -33,7 +36,8 @@ def get_public_holidays(public_holidays_url: str, year: str) -> DataFrame:
     response = requests.get(f"{public_holidays_url}/{year}/BR")
     try:
         response.raise_for_status()
-        df = read_json(response.text)
+        #df = read_json(response.text)
+        df = read_json(StringIO(response.text))
         df["date"] = to_datetime(df["date"])
         df = df.drop(columns=["types", "counties"])
         return df
