@@ -145,13 +145,6 @@ def query_freight_value_weight_relationship(database: Engine) -> QueryResult:
     In this particular query, we want to evaluate if exists a correlation between
     the weight of the product and the value paid for delivery.
 
-    We will use olist_orders, olist_order_items, and olist_products tables alongside
-    some Pandas magic to produce the desired output: A table that allows us to
-    compare the order total weight and total freight value.
-
-    Of course, you could also do this with pure SQL statements but we would like
-    to see if you've learned correctly the pandas' concepts seen so far.
-
     Args:
         database (Engine): Database connection.
 
@@ -169,35 +162,37 @@ def query_freight_value_weight_relationship(database: Engine) -> QueryResult:
     # Get products from olist_products table
     products = read_sql("SELECT * FROM olist_products", database)
 
-    # TODO: Fusionar las tablas items, orders y products usando 'order_id'/'product_id'.
-    # Sugerimos usar la función pandas.merge().
-    # Asigna el resultado a la variable `data`.
+    # Merge tables
     data = items.merge(products, on="product_id", how="left").merge(
         orders, on="order_id", how="left"
     )
 
-    # TODO: Obtener solo los pedidos entregados.
-    # Usando los resultados anteriores de la fusión (almacenados en la variable `data`),
-    # aplica una máscara booleana para conservar solo los pedidos con estado 'delivered'.
-    # Asigna el resultado a la variable `delivered`.
+    # Filter delivered orders
     delivered = data[data["order_status"] == "delivered"]
 
-    # TODO: Obtener la suma de freight_value y product_weight_g por cada order_id.
-    # Un mismo pedido (identificado por 'order_id') puede contener varios productos,
-    # por lo que decidimos sumar los valores de 'freight_value' y 'product_weight_g'
-    # de todos los productos dentro de ese pedido.
-    # Usa el DataFrame de pandas almacenado en la variable `delivered`. Sugerimos
-    # que consultes pandas.DataFrame.groupby() y pandas.DataFrame.agg() para la
-    # transformación de los datos.
-    # Guarda el resultado en la variable `aggregations`.
+    # Group by order_id and sum freight_value and product_weight_g
     aggregations = (
         delivered.groupby("order_id")
-        .agg(
-            total_freight_value=pd.NamedAgg(column="freight_value", aggfunc="sum"),
-            total_weight=pd.NamedAgg(column="product_weight_g", aggfunc="sum"),
-        )
+        .agg({
+            "freight_value": "sum",
+            "product_weight_g": "sum"
+        })
         .reset_index()
     )
+
+    # Rename columns to match expected JSON format
+    aggregations = aggregations.rename(columns={
+        "freight_value": "freight_value",
+        "product_weight_g": "product_weight_g"
+    })
+
+    # Convert numeric columns to float
+    aggregations["freight_value"] = aggregations["freight_value"].astype(float)
+    aggregations["product_weight_g"] = aggregations["product_weight_g"].astype(float)
+
+    # Sort by order_id to ensure consistent ordering
+    aggregations = aggregations.sort_values("order_id").reset_index(drop=True)
+
     return QueryResult(query=query_name, result=aggregations)
 
 
