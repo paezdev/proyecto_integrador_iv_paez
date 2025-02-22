@@ -49,3 +49,6 @@ desktop.ini
 
 # Archivos de checkpoints de Jupyter
 .ipynb_checkpoints/
+
+# Base de Datos
+olist.db
