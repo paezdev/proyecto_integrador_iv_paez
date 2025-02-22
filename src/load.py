@@ -15,6 +15,5 @@ def load(data_frames: Dict[str, DataFrame], database: Engine):
     # usar pandas.DataFrame.to_sql() para cargar el DataFrame en la base de datos
     # como una tabla.
     # Para el nombre de la tabla, utiliza las claves del diccionario `data_frames`.
-   # Usar el objeto Engine directamente con pandas.to_sql()
     for table_name, df in data_frames.items():
-        df.to_sql(table_name, con=database, if_exists="replace", index=False)
+        df.to_sql(table_name, con=database, if_exists="replace")

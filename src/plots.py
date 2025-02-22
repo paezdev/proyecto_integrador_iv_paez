@@ -212,7 +212,7 @@ def plot_order_amount_per_day_with_holidays(df: DataFrame):
     # Sugerencia: usar plt.axvline.
     plt.figure(figsize=(12, 6))
     sns.lineplot(x=df["date"], y=df["order_count"], marker="o")
-    
+
     # Marcar los días festivos con líneas verticales
     holidays = df[df["holiday"] == True]["date"]
     for holiday in holidays:
