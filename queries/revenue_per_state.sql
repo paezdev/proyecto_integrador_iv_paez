@@ -3,20 +3,16 @@
 -- y la segunda mostrará el ingreso total de cada uno.
 -- PISTA: Todos los pedidos deben tener un estado "delivered" y la fecha real de entrega no debe ser nula.
 
-WITH delivered_orders AS (
-    SELECT 
-        c.customer_state,
-        (oi.price + oi.freight_value) AS total_revenue
-    FROM olist_orders o
-    JOIN olist_order_items oi ON o.order_id = oi.order_id
-    JOIN olist_customers c ON o.customer_id = c.customer_id
-    WHERE o.order_status = 'delivered'
-      AND o.order_delivered_customer_date IS NOT NULL
-)
 SELECT 
-    customer_state,
-    SUM(total_revenue) AS Revenue  -- SQLite maneja los decimales automáticamente
-FROM delivered_orders
-GROUP BY customer_state
+    oc.customer_state, 
+    SUM(oop.payment_value) AS Revenue
+FROM olist_customers oc
+LEFT JOIN olist_orders oo 
+    ON oc.customer_id = oo.customer_id
+LEFT JOIN olist_order_payments oop
+    ON oo.order_id = oop.order_id
+WHERE oo.order_status = 'delivered'
+AND oo.order_delivered_customer_date IS NOT NULL
+GROUP BY oc.customer_state
 ORDER BY Revenue DESC
 LIMIT 10;
