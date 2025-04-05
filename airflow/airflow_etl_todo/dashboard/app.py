@@ -39,9 +39,9 @@ col1, col2 = st.columns([2, 1])
 
 with col1:
     chart = alt.Chart(df_states).mark_bar().encode(
-        x=alt.X('Revenue:Q', title="Ingresos (BRL)"),
-        y=alt.Y('customer_state:N', sort='-x', title="Estado"),
-        tooltip=['customer_state', 'Revenue']
+        x=alt.X('total_revenue:Q', title="Ingresos (BRL)"),
+        y=alt.Y('state:N', sort='-x', title="Estado"),
+        tooltip=['state', 'total_revenue']
     ).properties(
         height=400,
         title="Top 10 estados con mayor ingreso generado por pedidos entregados"
@@ -60,34 +60,33 @@ st.header("⏱️ Comparación mensual de tiempos de entrega reales vs. estimado
 query2 = "SELECT * FROM gold_delivery_comparison"
 df_delivery = pd.read_sql(query2, conn)
 
-# Reestructurar a formato largo para comparar años
+# Reestructurar para gráfico: convertir actual vs estimado en formato largo
 df_long = df_delivery.melt(
-    id_vars=["month_no", "month"],
-    value_vars=[
-        'Year2016_real_time', 'Year2017_real_time', 'Year2018_real_time',
-        'Year2016_estimated_time', 'Year2017_estimated_time', 'Year2018_estimated_time'
-    ],
-    var_name="type",
+    id_vars=["month_year"],
+    value_vars=["actual_days", "estimated_days"],
+    var_name="time_type",
     value_name="delivery_time"
 )
 
-# Separar tipo de tiempo y año
-df_long["year"] = df_long["type"].str.extract(r'Year(\d{4})')
-df_long["time_type"] = df_long["type"].apply(lambda x: "Real" if "real" in x else "Estimado")
+# Renombrar para visualización más clara
+df_long["time_type"] = df_long["time_type"].map({
+    "actual_days": "Real",
+    "estimated_days": "Estimado"
+})
 
 # Gráfico de comparación
 line_chart = alt.Chart(df_long).mark_line(point=True).encode(
-    x=alt.X("month:N", title="Mes"),
+    x=alt.X("month_year:N", title="Mes"),
     y=alt.Y("delivery_time:Q", title="Tiempo promedio de entrega (días)"),
-    color=alt.Color("year:N", title="Año"),
-    strokeDash="time_type",
-    tooltip=["year", "month", "time_type", "delivery_time"]
+    color=alt.Color("time_type:N", title="Tipo de tiempo"),
+    tooltip=["month_year", "time_type", "delivery_time"]
 ).properties(
     height=400,
-    title="Tiempos de entrega reales vs. estimados (por año)"
+    title="Tiempos de entrega reales vs. estimados"
 )
 
 st.altair_chart(line_chart, use_container_width=True)
+
 
 conn.close()
 
